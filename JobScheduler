@@ -237,4 +237,15 @@ public class JobScheduler {
         System.out.println(" 0. Exit");
         System.out.println("----------------");
     }
+    public class Main {
+    public static void main(String[] args) {
+        Job job1 = new Job(1, "Task1", 5, 10);
+
+        System.out.println("Job Created:");
+        System.out.println("ID: " + job1.jobId);
+        System.out.println("Name: " + job1.jobName);
+        System.out.println("Priority: " + job1.priority);
+        System.out.println("Burst Time: " + job1.burstTime);
+    }
+}
 }
