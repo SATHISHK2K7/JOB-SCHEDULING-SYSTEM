@@ -1,0 +1,240 @@
+import java.util.Scanner;
+class Job {
+    int jobId;
+    String jobName;
+    int priority;   
+    int burstTime;  
+
+    Job(int jobId, String jobName, int priority, int burstTime) {
+        this.jobId    = jobId;
+        this.jobName  = jobName;
+        this.priority = priority;
+        this.burstTime = burstTime;
+    }
+}
+
+class MaxHeap {
+    Job[] heap;
+    int size;
+    int capacity;
+
+    MaxHeap(int capacity) {
+        this.capacity = capacity;
+        this.size     = 0;
+        this.heap     = new Job[capacity];
+    }
+
+    int parent(int i)  { return (i - 1) / 2; }
+    int left(int i)    { return 2 * i + 1; }
+    int right(int i)   { return 2 * i + 2; }
+
+    void swap(int i, int j) {
+        Job temp  = heap[i];
+        heap[i]   = heap[j];
+        heap[j]   = temp;
+    }
+
+    void insert(Job job) {
+        if (size == capacity) {
+            System.out.println("Heap is full! Cannot insert.");
+            return;
+        }
+        heap[size] = job;
+        int i = size;
+        size++;
+        while (i != 0 && heap[parent(i)].priority > heap[i].priority) {
+            swap(i, parent(i));
+            i = parent(i);
+        }
+        System.out.println("Job '" + job.jobName + "' inserted successfully.");
+    }
+
+    void heapifyDown(int i, int n) {
+        int smallest = i;
+        int l = left(i);
+        int r = right(i);
+        if (l < n && heap[l].priority < heap[smallest].priority) smallest = l;
+        if (r < n && heap[r].priority < heap[smallest].priority) smallest = r;
+        if (smallest != i) {
+            swap(i, smallest);
+            heapifyDown(smallest, n);
+        }
+    }
+
+    Job[] heapSort() {
+        if (size == 0) return new Job[0];
+        Job[] arr = new Job[size];
+        System.arraycopy(heap, 0, arr, 0, size);
+
+        for (int i = arr.length / 2 - 1; i >= 0; i--)
+            heapifyDownArr(arr, i, arr.length);
+
+        for (int i = arr.length - 1; i > 0; i--) {
+            Job tmp  = arr[0];
+            arr[0]   = arr[i];
+            arr[i]   = tmp;
+            heapifyDownArr(arr, 0, i);
+        }
+        for (int i = 0, j = arr.length - 1; i < j; i++, j--) {
+            Job tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
+        }
+        return arr;
+    }
+
+    void heapifyDownArr(Job[] arr, int i, int n) {
+        int smallest = i;
+        int l = 2 * i + 1, r = 2 * i + 2;
+        if (l < n && arr[l].priority < arr[smallest].priority) smallest = l;
+        if (r < n && arr[r].priority < arr[smallest].priority) smallest = r;
+        if (smallest != i) {
+            Job tmp = arr[i]; arr[i] = arr[smallest]; arr[smallest] = tmp;
+            heapifyDownArr(arr, smallest, n);
+        }
+    }
+    Job peek() {
+        if (size == 0) return null;
+        return heap[0];
+    }
+
+    Job extractMin() {
+        if (size == 0) return null;
+        Job top = heap[0];
+        heap[0] = heap[size - 1];
+        size--;
+        heapifyDown(0, size);
+        return top;
+    }
+    void display() {
+        if (size == 0) {
+            System.out.println("No jobs in the queue.");
+            return;
+        }
+        System.out.println("\n+--------+----------------------+----------+-----------+");
+        System.out.printf("| %-6s | %-20s | %-8s | %-9s |%n",
+                          "Job ID", "Job Name", "Priority", "Burst(ms)");
+        System.out.println("+--------+----------------------+----------+-----------+");
+        for (int i = 0; i < size; i++) {
+            System.out.printf("| %-6d | %-20s | %-8d | %-9d |%n",
+                heap[i].jobId, heap[i].jobName,
+                heap[i].priority, heap[i].burstTime);
+        }
+        System.out.println("+--------+----------------------+----------+-----------+");
+    }
+    int searchById(int id) {
+        for (int i = 0; i < size; i++)
+            if (heap[i].jobId == id) return i;
+        return -1;
+    }
+    void scheduleAll() {
+        if (size == 0) {
+            System.out.println("No jobs to schedule.");
+            return;
+        }
+        Job[] sorted = heapSort();
+        int time = 0;
+        System.out.println("\n===== SCHEDULING ORDER (Heap Sort by Priority) =====");
+        System.out.println("+--------+----------------------+----------+-----------+----------+");
+        System.out.printf("| %-6s | %-20s | %-8s | %-9s | %-8s |%n",
+                          "Job ID", "Job Name", "Priority", "Burst(ms)", "Start(ms)");
+        System.out.println("+--------+----------------------+----------+-----------+----------+");
+        for (Job j : sorted) {
+            System.out.printf("| %-6d | %-20s | %-8d | %-9d | %-8d |%n",
+                    j.jobId, j.jobName, j.priority, j.burstTime, time);
+            time += j.burstTime;
+        }
+        System.out.println("+--------+----------------------+----------+-----------+----------+");
+        System.out.println("Total execution time: " + time + " ms");
+    }
+}
+
+public class JobScheduler {
+
+    static int nextId = 1;
+
+    public static void main(String[] args) {
+        Scanner sc   = new Scanner(System.in);
+        MaxHeap heap = new MaxHeap(50);
+        int choice;
+
+        System.out.println("=====================================================");
+        System.out.println("    JOB SCHEDULING SYSTEM - Heap Sort & Priority Queue  ");
+        System.out.println("=====================================================");
+
+        do {
+            printMenu();
+            System.out.print("Enter choice: ");
+            choice = sc.nextInt();
+            sc.nextLine();
+
+            switch (choice) {
+                case 1: // Insert Job
+                    System.out.print("Enter Job Name       : ");
+                    String name = sc.nextLine().trim();
+                    if (name.isEmpty()) { System.out.println("Job name cannot be empty."); break; }
+                    System.out.print("Enter Priority (1=High, 10=Low): ");
+                    int pri = sc.nextInt();
+                    System.out.print("Enter Burst Time (ms): ");
+                    int bt  = sc.nextInt();
+                    sc.nextLine();
+                    if (pri < 1 || pri > 100) { System.out.println("Priority must be 1-100."); break; }
+                    if (bt  <= 0)             { System.out.println("Burst time must be positive."); break; }
+                    heap.insert(new Job(nextId++, name, pri, bt));
+                    break;
+
+                case 2: // Display All
+                    heap.display();
+                    break;
+
+                case 3: // Heap Sort & Schedule
+                    heap.scheduleAll();
+                    break;
+
+                case 4: // Peek
+                    Job top = heap.peek();
+                    if (top == null) System.out.println("Queue is empty.");
+                    else System.out.printf("Highest priority job: [%d] %s (Priority %d)%n",
+                            top.jobId, top.jobName, top.priority);
+                    break;
+
+                case 5: // Dequeue
+                    Job j = heap.extractMin();
+                    if (j == null) System.out.println("Queue is empty.");
+                    else System.out.printf("Executed Job: [%d] %s (Priority %d, Burst %d ms)%n",
+                            j.jobId, j.jobName, j.priority, j.burstTime);
+                    break;
+
+                case 6: // Search
+                    System.out.print("Enter Job ID to search: ");
+                    int id  = sc.nextInt(); sc.nextLine();
+                    int idx = heap.searchById(id);
+                    if (idx == -1) System.out.println("Job ID " + id + " not found.");
+                    else {
+                        Job found = heap.heap[idx];
+                        System.out.printf("Found: [%d] %s | Priority: %d | Burst: %d ms%n",
+                                found.jobId, found.jobName, found.priority, found.burstTime);
+                    }
+                    break;
+
+                case 0:
+                    System.out.println("Exiting... Goodbye!");
+                    break;
+
+                default:
+                    System.out.println("Invalid option. Try again.");
+            }
+        } while (choice != 0);
+        sc.close();
+    }
+
+    static void printMenu() {
+        System.out.println("\n----- MENU -----");
+        System.out.println(" 1. Insert Job");
+        System.out.println(" 2. Display All Jobs");
+        System.out.println(" 3. Heap Sort & Schedule Jobs");
+        System.out.println(" 4. Peek Highest Priority Job");
+        System.out.println(" 5. Execute (Dequeue) Highest Priority Job");
+        System.out.println(" 6. Search Job by ID");
+        System.out.println(" 0. Exit");
+        System.out.println("----------------");
+    }
+}
